@@ -94,3 +94,15 @@
 - [x] Histórico de partidas com resultado, adversário, tempo e data
 - [x] Rota dinâmica /player/[userId] acessível a partir do ranking
 - [x] Integração do onPress nos cards do ranking para abrir perfil público
+
+## Sistema de Amizades
+- [x] Criar tabela friendships no Supabase com RLS e índices
+- [x] Hook useFriendship para gerenciar estado de amizade entre dois usuários
+- [x] Hook useFriends para listar amigos e solicitações pendentes
+- [x] Botão dinâmico no perfil público (Adicionar / Pendente / Amigos / Remover)
+- [x] Tela de Amigos com abas: Amigos, Solicitações Recebidas, Enviadas
+- [x] Aceitar / Recusar solicitações de amizade
+- [x] Remover amigo existente com confirmação
+- [x] Cancelar solicitação enviada
+- [x] Navegar para perfil público a partir da lista de amigos
+- [x] Badge de solicitações pendentes na aba Mais

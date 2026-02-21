@@ -10,9 +10,11 @@ import {
   Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Alert } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { usePublicProfile, usePlayerGames } from '@/hooks/supabase/use-public-profile';
 import { useSupabaseAuth } from '@/lib/auth-context';
+import { useFriendship, type FriendshipStatus } from '@/hooks/supabase/use-friendship';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -175,6 +177,84 @@ function GameItem({ game }: { game: ReturnType<typeof usePlayerGames>['games'][0
   );
 }
 
+// ─── Botão de amizade ────────────────────────────────────────────────────────
+
+function FriendshipButton({
+  status,
+  loading,
+  onSend,
+  onCancel,
+  onAccept,
+  onDecline,
+  onRemove,
+}: {
+  status: FriendshipStatus;
+  loading: boolean;
+  onSend: () => void;
+  onCancel: () => void;
+  onAccept: () => void;
+  onDecline: () => void;
+  onRemove: () => void;
+}) {
+  if (loading) {
+    return (
+      <View style={styles.friendBtnRow}>
+        <View style={[styles.friendBtn, styles.friendBtnPrimary, { opacity: 0.6 }]}>
+          <ActivityIndicator size="small" color="#1e1e1e" />
+        </View>
+      </View>
+    );
+  }
+
+  if (status === 'none' || status === 'declined') {
+    return (
+      <View style={styles.friendBtnRow}>
+        <TouchableOpacity style={[styles.friendBtn, styles.friendBtnPrimary]} onPress={onSend} activeOpacity={0.8}>
+          <Text style={styles.friendBtnPrimaryText}>➕ Adicionar Amigo</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (status === 'pending_sent') {
+    return (
+      <View style={styles.friendBtnRow}>
+        <View style={[styles.friendBtn, styles.friendBtnMuted]}>
+          <Text style={styles.friendBtnMutedText}>⏳ Solicitação Enviada</Text>
+        </View>
+        <TouchableOpacity style={[styles.friendBtn, styles.friendBtnOutline]} onPress={onCancel} activeOpacity={0.8}>
+          <Text style={styles.friendBtnOutlineText}>Cancelar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (status === 'pending_received') {
+    return (
+      <View style={styles.friendBtnRow}>
+        <TouchableOpacity style={[styles.friendBtn, styles.friendBtnPrimary]} onPress={onAccept} activeOpacity={0.8}>
+          <Text style={styles.friendBtnPrimaryText}>✅ Aceitar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.friendBtn, styles.friendBtnDanger]} onPress={onDecline} activeOpacity={0.8}>
+          <Text style={styles.friendBtnDangerText}>✕ Recusar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // accepted
+  return (
+    <View style={styles.friendBtnRow}>
+      <View style={[styles.friendBtn, styles.friendBtnSuccess]}>
+        <Text style={styles.friendBtnSuccessText}>✓ Amigos</Text>
+      </View>
+      <TouchableOpacity style={[styles.friendBtn, styles.friendBtnOutline]} onPress={onRemove} activeOpacity={0.8}>
+        <Text style={styles.friendBtnOutlineText}>Remover</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 // ─── Tela principal ───────────────────────────────────────────────────────────
 
 type ActiveMode = 'blitz' | 'rapid' | 'classical';
@@ -190,6 +270,17 @@ export default function PlayerProfileScreen() {
   const [activeMode, setActiveMode] = useState<ActiveMode>('blitz');
 
   const isOwnProfile = myProfile?.user_id === userId;
+
+  const {
+    status: friendStatus,
+    loading: friendLoading,
+    actionLoading: friendActionLoading,
+    sendRequest,
+    cancelRequest,
+    acceptRequest,
+    declineRequest,
+    removeFriend,
+  } = useFriendship(userId ?? null);
 
   const activeRating = useMemo(() => {
     if (!profile) return 800;
@@ -259,13 +350,32 @@ export default function PlayerProfileScreen() {
             )}
           </View>
 
-          {isOwnProfile && (
+          {isOwnProfile ? (
             <TouchableOpacity
               onPress={() => router.push('/profile' as any)}
               style={styles.editButton}
             >
               <Text style={styles.editButtonText}>✏️ Editar Perfil</Text>
             </TouchableOpacity>
+          ) : !friendLoading && (
+            <FriendshipButton
+              status={friendStatus}
+              loading={friendActionLoading}
+              onSend={sendRequest}
+              onCancel={cancelRequest}
+              onAccept={acceptRequest}
+              onDecline={declineRequest}
+              onRemove={() => {
+                Alert.alert(
+                  'Remover Amigo',
+                  `Deseja remover ${profile.display_name ?? profile.username} da sua lista de amigos?`,
+                  [
+                    { text: 'Cancelar', style: 'cancel' },
+                    { text: 'Remover', style: 'destructive', onPress: removeFriend },
+                  ]
+                );
+              }}
+            />
           )}
         </View>
 
@@ -689,4 +799,31 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   retryText: { color: '#1e1e1e', fontWeight: '600', fontSize: 14 },
+
+  // Friendship buttons
+  friendBtnRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  friendBtn: {
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    minWidth: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  friendBtnPrimary: { backgroundColor: '#d4a843' },
+  friendBtnPrimaryText: { color: '#1e1e1e', fontWeight: '700', fontSize: 14 },
+  friendBtnMuted: { backgroundColor: '#2c2c2c', borderWidth: 1, borderColor: '#4a4a4a' },
+  friendBtnMutedText: { color: '#9a9a9a', fontSize: 13 },
+  friendBtnOutline: { borderWidth: 1.5, borderColor: '#4a4a4a', backgroundColor: 'transparent' },
+  friendBtnOutlineText: { color: '#9a9a9a', fontSize: 13 },
+  friendBtnDanger: { backgroundColor: '#ef444422', borderWidth: 1, borderColor: '#ef4444' },
+  friendBtnDangerText: { color: '#ef4444', fontWeight: '600', fontSize: 14 },
+  friendBtnSuccess: { backgroundColor: '#22c55e22', borderWidth: 1, borderColor: '#22c55e' },
+  friendBtnSuccessText: { color: '#22c55e', fontWeight: '600', fontSize: 14 },
 });

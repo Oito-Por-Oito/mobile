@@ -3,9 +3,10 @@ import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { useSupabaseAuth } from '@/lib/auth-context';
+import { useFriends } from '@/hooks/supabase/use-friendship';
 
 const SOCIAL_ITEMS = [
-  { icon: '👥', title: 'Amigos', description: 'Gerencie seus amigos e desafie-os', route: '/friends' },
+  { icon: '👥', title: 'Amigos', description: 'Gerencie seus amigos e desafie-os', route: '/friends', badgeKey: 'friends' },
   { icon: '🏛️', title: 'Clubes', description: 'Junte-se a clubes de xadrez', route: '/clubs' },
   { icon: '💬', title: 'Fórum', description: 'Discuta xadrez com a comunidade', route: '/forum' },
   { icon: '🏆', title: 'Ranking', description: 'Veja os melhores jogadores', route: '/ranking' },
@@ -22,6 +23,7 @@ const QUICK_STATS_ITEMS = [
 export default function MoreScreen() {
   const router = useRouter();
   const { user, profile, signOut } = useSupabaseAuth();
+  const { totalPending } = useFriends();
 
   const handleNavigation = (route: string) => {
     router.push(route as any);
@@ -122,7 +124,14 @@ export default function MoreScreen() {
                 <Text style={{ fontSize: 20 }}>{item.icon}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#f0f0f0', fontSize: 15, fontWeight: '500' }}>{item.title}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ color: '#f0f0f0', fontSize: 15, fontWeight: '500' }}>{item.title}</Text>
+                  {(item as any).badgeKey === 'friends' && totalPending > 0 && (
+                    <View style={{ backgroundColor: '#ef4444', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1, minWidth: 20, alignItems: 'center' }}>
+                      <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{totalPending}</Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={{ color: '#9a9a9a', fontSize: 12 }}>{item.description}</Text>
               </View>
               <Text style={{ color: '#4a4a4a', fontSize: 18 }}>›</Text>
