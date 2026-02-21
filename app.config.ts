@@ -32,7 +32,7 @@ const env = {
   appSlug: "oitoporoito-mobile",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "",
+  logoUrl: "https://private-us-east-1.manuscdn.com/sessionFile/AU0kqLEzI6W7U6x5wSE57n/sandbox/EE9pfbPPCQUZH6O91FWTeu-img-1_1771642375000_na1fn_aWNvbg.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvQVUwa3FMRXpJNlc3VTZ4NXdTRTU3bi9zYW5kYm94L0VFOXBmYlBQQ1FVWkg2TzkxRldUZXUtaW1nLTFfMTc3MTY0MjM3NTAwMF9uYTFmbl9hV052YmcucG5nP3gtb3NzLXByb2Nlc3M9aW1hZ2UvcmVzaXplLHdfMTkyMCxoXzE5MjAvZm9ybWF0LHdlYnAvcXVhbGl0eSxxXzgwIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=PykmmZEyC6cylPfQVclYBXav1oEOm5fMpjpKB6UaVdUxZivrMu9rM-MbbSjMn4thDPcRLsF4mdculr9AlfmnwBu8QY8vj4R1V5iC0TWQ8HX3W-fd6EO90ydYSJxeYtNIZHe9pJgZzdv-9TGTVq9-0CfLOOaq21tenoU8TcIYjsnQVp9Kl~THxyfbks0oInYodkT247gT1WDoDegwl8xgFodsd8x3LRyWLNBv2XpyQ74zj4JhyWDUFYabtWAJeaQQ~kUDgaHiVBzAe2nGV6UB3Xj3Bu5cVzfpLAaNWGc7lAijFmBmf9mZpBg5df9kSg4qNXVV5-PWKspDWnwBF2AUNA__",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
