@@ -83,3 +83,14 @@
 - [x] Tier badge por faixa de rating (Novato → Mestre Internacional)
 - [x] Busca por nome de jogador
 - [x] Pull-to-refresh para atualizar o ranking
+
+## Perfil Público
+- [x] Hook usePublicProfile para buscar dados do jogador por user_id
+- [x] Hook usePlayerGames para buscar histórico de partidas paginado
+- [x] Tela de perfil público com cabeçalho (avatar, nome, tier, streak)
+- [x] Seção de ratings por modalidade (Blitz, Rápido, Clássico) com seleção interativa
+- [x] Seção de estatísticas gerais (partidas, vitórias, derrotas, empates)
+- [x] Barra de distribuição de resultados com legenda
+- [x] Histórico de partidas com resultado, adversário, tempo e data
+- [x] Rota dinâmica /player/[userId] acessível a partir do ranking
+- [x] Integração do onPress nos cards do ranking para abrir perfil público

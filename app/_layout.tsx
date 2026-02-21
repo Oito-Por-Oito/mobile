@@ -103,6 +103,7 @@ export default function RootLayout() {
               <Stack.Screen name="forum" />
               <Stack.Screen name="play-online" />
               <Stack.Screen name="play-computer" />
+              <Stack.Screen name="player/[userId]" />
             </Stack>
           </AuthProvider>
           <StatusBar style="auto" />

@@ -224,9 +224,10 @@ export default function RankingScreen() {
       <PlayerCard
         player={item}
         isCurrentUser={!!profile && item.user_id === profile.user_id}
+        onPress={() => router.push(`/player/${item.user_id}` as any)}
       />
     ),
-    [profile]
+    [profile, router]
   );
 
   const keyExtractor = useCallback((item: RankingPlayer) => item.id, []);
