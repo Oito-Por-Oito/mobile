@@ -74,3 +74,12 @@
 - [x] Gerar logo do app (rei de xadrez dourado com "8 8")
 - [x] Configurar splash screen
 - [x] Atualizar app.config.ts com nome e logo
+
+## Ranking
+- [x] Hook useRanking com busca paginada do Supabase por modalidade
+- [x] Tela de Ranking com filtros (Blitz, Rápido, Clássico)
+- [x] Card de posição do usuário logado no ranking
+- [x] Lista paginada com avatar, nome, rating e estatísticas
+- [x] Tier badge por faixa de rating (Novato → Mestre Internacional)
+- [x] Busca por nome de jogador
+- [x] Pull-to-refresh para atualizar o ranking
