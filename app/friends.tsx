@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { useFriends, type FriendEntry } from '@/hooks/supabase/use-friendship';
+import ChallengeModal from '@/components/challenge/ChallengeModal';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ function FriendCard({
   onCancel?: () => void;
   onPress: () => void;
 }) {
+  const [showChallenge, setShowChallenge] = useState(false);
   const { profile } = entry;
   const tier = getRatingTier(profile.rating_blitz);
   const winRate = profile.total_games > 0
@@ -102,9 +104,14 @@ function FriendCard({
       {/* Actions */}
       <View style={styles.cardActions}>
         {type === 'friend' && (
-          <TouchableOpacity style={styles.actionBtnDanger} onPress={onRemove}>
-            <Text style={styles.actionBtnDangerText}>✕</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity style={styles.actionBtnChallenge} onPress={() => setShowChallenge(true)}>
+              <Text style={styles.actionBtnChallengeText}>♟</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionBtnDanger} onPress={onRemove}>
+              <Text style={styles.actionBtnDangerText}>✕</Text>
+            </TouchableOpacity>
+          </>
         )}
         {type === 'received' && (
           <>
@@ -122,6 +129,14 @@ function FriendCard({
           </TouchableOpacity>
         )}
       </View>
+      {showChallenge && (
+        <ChallengeModal
+          friend={entry.profile as any}
+          visible={showChallenge}
+          onClose={() => setShowChallenge(false)}
+          onSent={() => setShowChallenge(false)}
+        />
+      )}
     </TouchableOpacity>
   );
 }
@@ -417,6 +432,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actionBtnCancelText: { color: '#9a9a9a', fontSize: 14 },
+  actionBtnChallenge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#d4a84322',
+    borderWidth: 1,
+    borderColor: '#d4a843',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionBtnChallengeText: { color: '#d4a843', fontSize: 16, fontWeight: 'bold' },
 
   // Empty
   emptyContainer: {

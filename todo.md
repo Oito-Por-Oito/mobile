@@ -148,3 +148,18 @@
 - [x] Botão de análise no header (ativar/desativar)
 - [x] Precisão exibida nos cards de jogadores (brancas/pretas)
 - [x] Banner de progresso durante a análise com Stockfish
+
+## Desafiar Amigo
+- [x] Criar tabela `challenges` no Supabase com RLS, índices e expiry automático
+- [x] Hook `useChallenge` (mobile) para enviar, cancelar e escutar desafio entre dois jogadores
+- [x] Hook `usePendingChallenges` (mobile) para escutar todos os desafios recebidos em tempo real
+- [x] Hook `useChallenge` (web) para enviar, aceitar, recusar e cancelar desafios
+- [x] Modal de configuração do desafio (10 opções de tempo + cor das peças) - mobile
+- [x] ChallengeModal no frontend web com opções de tempo e cor
+- [x] Botão ♟ Desafiar nos cards de amigos na tela de Amigos (mobile)
+- [x] Botão Desafiar nos cards de amigos na página ChessFriends (web)
+- [x] ChallengeBanner global no app mobile (desafio recebido com aceitar/recusar animado)
+- [x] Aceitar desafio cria partida no Supabase e navega para play-online (mobile)
+- [x] Aceitar desafio cria partida no Supabase e redireciona para jogo (web)
+- [x] Paridade total: Ranking, Perfil Público e Amizades reais também implementados no web
+- [x] 52 testes passando (6 novos de challenge, 0 erros TypeScript)
