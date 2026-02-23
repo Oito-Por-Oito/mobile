@@ -119,6 +119,20 @@
 - [x] Destaque visual dos quadrados de origem e destino do lance atual
 - [x] Integrar botão de replay no histórico do perfil público
 
+## Telas Complementares
+- [x] Tela de Clubes com filtros e função de entrar/sair
+- [x] Tela de Fórum com categorias e lista de posts
+- [x] Tela de Coaches com perfis e agendamento
+- [x] Tela de Torneios com status ao vivo, em breve e encerrados
+- [x] Tela de Estatísticas detalhadas com gráficos e aberturas
+- [x] Tela de Metas com progresso visual por objetivo
+
+## Auditoria Final
+- [x] Remover rotas fantasmas do _layout.tsx (game/[id], game-history, game-replay/[id])
+- [x] Registrar todas as novas rotas no _layout.tsx
+- [x] TypeScript sem erros (0 erros)
+- [x] Todos os 46 testes passando (1 skipped por design)
+
 ## Análise de Precisão por Lance
 - [x] Instalar Stockfish no servidor backend (via npm + apt)
 - [x] Endpoint tRPC chess.analyzeMove com Stockfish (profundidade configurável)

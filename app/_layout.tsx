@@ -91,9 +91,6 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="oauth/callback" />
               <Stack.Screen name="(auth)" options={{ presentation: 'fullScreenModal' }} />
-              <Stack.Screen name="game/[id]" />
-              <Stack.Screen name="game-history" />
-              <Stack.Screen name="game-replay/[id]" />
               <Stack.Screen name="profile" />
               <Stack.Screen name="settings" />
               <Stack.Screen name="ranking" />
@@ -105,6 +102,10 @@ export default function RootLayout() {
               <Stack.Screen name="play-computer" />
               <Stack.Screen name="player/[userId]" />
               <Stack.Screen name="game/[gameId]" />
+              <Stack.Screen name="coaches" />
+              <Stack.Screen name="tournaments" />
+              <Stack.Screen name="stats" />
+              <Stack.Screen name="goals" />
             </Stack>
           </AuthProvider>
           <StatusBar style="auto" />
