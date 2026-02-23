@@ -106,3 +106,15 @@
 - [x] Cancelar solicitação enviada
 - [x] Navegar para perfil público a partir da lista de amigos
 - [x] Badge de solicitações pendentes na aba Mais
+
+## Replay de Partidas
+- [x] Verificar estrutura das tabelas game_moves e games
+- [x] Hook useGameReplay para carregar partida e lançes ordenados
+- [x] Tela de replay com tabuleiro interativo (react-native-chessboard)
+- [x] Controles: Primeiro, Anterior, Próximo, Último lance
+- [x] Barra de progresso visual com percentual de avanço
+- [x] Painel de lançes em notação algébrica com destaque do lance atual
+- [x] Informações da partida: jogadores, resultado, duração, motivo
+- [x] Reprodução automática (play/pause) com velocidade ajustável (0.5x, 1x, 2x, 3x)
+- [x] Destaque visual dos quadrados de origem e destino do lance atual
+- [x] Integrar botão de replay no histórico do perfil público

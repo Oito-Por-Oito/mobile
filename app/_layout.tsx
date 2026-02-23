@@ -104,6 +104,7 @@ export default function RootLayout() {
               <Stack.Screen name="play-online" />
               <Stack.Screen name="play-computer" />
               <Stack.Screen name="player/[userId]" />
+              <Stack.Screen name="game/[gameId]" />
             </Stack>
           </AuthProvider>
           <StatusBar style="auto" />

@@ -123,7 +123,10 @@ function RatingCard({ label, icon, rating, active, onPress }: {
 
 // ─── Game history item ────────────────────────────────────────────────────────
 
-function GameItem({ game }: { game: ReturnType<typeof usePlayerGames>['games'][0] }) {
+function GameItem({ game, onPress }: {
+  game: ReturnType<typeof usePlayerGames>['games'][0];
+  onPress: () => void;
+}) {
   const resultColor = game.playerResult === 'win'
     ? '#22c55e'
     : game.playerResult === 'draw'
@@ -136,7 +139,11 @@ function GameItem({ game }: { game: ReturnType<typeof usePlayerGames>['games'][0
   const colorIcon = game.playerColor === 'white' ? '⬜' : '⬛';
 
   return (
-    <View style={styles.gameItem}>
+    <TouchableOpacity
+      style={styles.gameItem}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
       {/* Result stripe */}
       <View style={[styles.gameResultStripe, { backgroundColor: resultColor }]} />
 
@@ -160,8 +167,13 @@ function GameItem({ game }: { game: ReturnType<typeof usePlayerGames>['games'][0
             </View>
           </View>
 
-          <View style={[styles.gameResultBadge, { backgroundColor: resultColor + '22' }]}>
-            <Text style={[styles.gameResultText, { color: resultColor }]}>{resultLabel}</Text>
+          <View style={styles.gameRightCol}>
+            <View style={[styles.gameResultBadge, { backgroundColor: resultColor + '22' }]}>
+              <Text style={[styles.gameResultText, { color: resultColor }]}>{resultLabel}</Text>
+            </View>
+            <View style={styles.replayBadge}>
+              <Text style={styles.replayBadgeText}>▶ Replay</Text>
+            </View>
           </View>
         </View>
 
@@ -173,7 +185,7 @@ function GameItem({ game }: { game: ReturnType<typeof usePlayerGames>['games'][0
           <Text style={styles.gameMeta}>{formatDate(game.started_at)}</Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -297,8 +309,13 @@ export default function PlayerProfileScreen() {
   }, [profile]);
 
   const renderGame = useCallback(
-    ({ item }: { item: typeof games[0] }) => <GameItem game={item} />,
-    []
+    ({ item }: { item: typeof games[0] }) => (
+      <GameItem
+        game={item}
+        onPress={() => router.push(`/game/${item.id}` as any)}
+      />
+    ),
+    [router]
   );
 
   const keyExtractor = useCallback((item: typeof games[0]) => item.id, []);
@@ -826,4 +843,16 @@ const styles = StyleSheet.create({
   friendBtnDangerText: { color: '#ef4444', fontWeight: '600', fontSize: 14 },
   friendBtnSuccess: { backgroundColor: '#22c55e22', borderWidth: 1, borderColor: '#22c55e' },
   friendBtnSuccessText: { color: '#22c55e', fontWeight: '600', fontSize: 14 },
+
+  // Replay badge
+  gameRightCol: { alignItems: 'flex-end', gap: 4 },
+  replayBadge: {
+    backgroundColor: '#d4a84322',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: '#d4a84366',
+  },
+  replayBadgeText: { color: '#d4a843', fontSize: 11, fontWeight: '600' },
 });
