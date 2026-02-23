@@ -73,7 +73,7 @@ describe('Public Profile - Supabase Integration', () => {
       expect(g).toHaveProperty('result_reason');
       expect(g).toHaveProperty('started_at');
     }
-  });
+  }, 15000);
 
   it('should support join with player profiles in games query', async () => {
     const gamesRes = await fetch(

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import Chessboard, { type ChessboardRef } from 'react-native-chessboard';
 import { ScreenContainer } from '@/components/screen-container';
 import { useGameReplay, INITIAL_FEN } from '@/hooks/supabase/use-game-replay';
+import { useMoveAnalysis, CLASSIFICATION_CONFIG, type MoveClassification } from '@/hooks/use-move-analysis';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BOARD_SIZE = Math.min(SCREEN_WIDTH - 32, 400);
@@ -61,18 +62,27 @@ function playerName(player: { display_name?: string | null; username: string } |
   return player.display_name ?? player.username;
 }
 
-// ─── Componente: Card de jogador ──────────────────────────────────────────────
+/** Format centipawn score for display (e.g. +1.2, -0.5, M3) */
+function formatScore(score: number, mate: number | null): string {
+  if (mate !== null) return mate > 0 ? `M${mate}` : `-M${Math.abs(mate)}`;
+  const pawns = score / 100;
+  return pawns >= 0 ? `+${pawns.toFixed(1)}` : pawns.toFixed(1);
+}
+
+// ─── Componente: Card de jogador com precisão ─────────────────────────────────
 
 function PlayerCard({
   player,
   side,
   isWinner,
   timeLeft,
+  accuracy,
 }: {
   player: { display_name?: string | null; username: string; rating_blitz: number } | null | undefined;
   side: 'white' | 'black';
   isWinner: boolean;
   timeLeft?: number | null;
+  accuracy?: number | null;
 }) {
   const name = playerName(player);
   const initial = name[0]?.toUpperCase() ?? '?';
@@ -92,23 +102,120 @@ function PlayerCard({
           {timeLeft != null && timeLeft > 0 ? `  ·  ${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}` : ''}
         </Text>
       </View>
+      {accuracy != null && (
+        <View style={styles.accuracyBadge}>
+          <Text style={styles.accuracyValue}>{accuracy.toFixed(0)}%</Text>
+          <Text style={styles.accuracyLabel}>precisão</Text>
+        </View>
+      )}
     </View>
   );
 }
 
-// ─── Componente: Lista de lances ──────────────────────────────────────────────
+// ─── Componente: Barra de avaliação ──────────────────────────────────────────
+
+function EvalBar({ score, mate }: { score: number; mate: number | null }) {
+  // Clamp score to ±800 cp for display
+  const clampedScore = Math.max(-800, Math.min(800, score));
+  // White advantage: 0 = all black, 1 = all white
+  const whiteAdvantage = (clampedScore + 800) / 1600;
+  const whiteHeight = `${Math.round(whiteAdvantage * 100)}%`;
+
+  return (
+    <View style={styles.evalBarContainer}>
+      <View style={styles.evalBarTrack}>
+        {/* Black side (top) */}
+        <View style={[styles.evalBarBlack, { flex: 1 - whiteAdvantage }]} />
+        {/* White side (bottom) */}
+        <View style={[styles.evalBarWhite, { flex: whiteAdvantage }]} />
+      </View>
+      <Text style={styles.evalScore} numberOfLines={1}>
+        {mate !== null
+          ? (mate > 0 ? `M${mate}` : `-M${Math.abs(mate)}`)
+          : (() => {
+              const p = score / 100;
+              return p >= 0 ? `+${p.toFixed(1)}` : p.toFixed(1);
+            })()}
+      </Text>
+    </View>
+  );
+}
+
+// ─── Componente: Resumo de precisão ──────────────────────────────────────────
+
+function AccuracySummary({
+  white,
+  black,
+}: {
+  white: { accuracy: number; brilliant: number; excellent: number; good: number; inaccuracy: number; mistake: number; blunder: number };
+  black: { accuracy: number; brilliant: number; excellent: number; good: number; inaccuracy: number; mistake: number; blunder: number };
+}) {
+  const rows: Array<{ key: MoveClassification; label: string; symbol: string; color: string }> = [
+    { key: 'brilliant', label: 'Brilhante', symbol: '!!', color: '#00b5ff' },
+    { key: 'excellent', label: 'Excelente', symbol: '!', color: '#22c55e' },
+    { key: 'good', label: 'Bom', symbol: '', color: '#9a9a9a' },
+    { key: 'inaccuracy', label: 'Imprecisão', symbol: '?!', color: '#f59e0b' },
+    { key: 'mistake', label: 'Erro', symbol: '?', color: '#f97316' },
+    { key: 'blunder', label: 'Blunder', symbol: '??', color: '#ef4444' },
+  ];
+
+  return (
+    <View style={styles.accuracySummary}>
+      <Text style={styles.sectionTitle}>Resumo da Análise</Text>
+
+      {/* Accuracy row */}
+      <View style={styles.accuracyRow}>
+        <View style={styles.accuracyCol}>
+          <Text style={styles.accuracyBigValue}>{white.accuracy.toFixed(0)}%</Text>
+          <Text style={styles.accuracyColLabel}>Brancas</Text>
+        </View>
+        <View style={styles.accuracyDivider} />
+        <View style={styles.accuracyCol}>
+          <Text style={styles.accuracyBigValue}>{black.accuracy.toFixed(0)}%</Text>
+          <Text style={styles.accuracyColLabel}>Pretas</Text>
+        </View>
+      </View>
+
+      {/* Classification breakdown */}
+      {rows.map((row) => {
+        const wCount = white[row.key];
+        const bCount = black[row.key];
+        if (wCount === 0 && bCount === 0) return null;
+        return (
+          <View key={row.key} style={styles.classRow}>
+            <Text style={[styles.classSymbol, { color: row.color }]}>{row.symbol || '—'}</Text>
+            <Text style={styles.classLabel}>{row.label}</Text>
+            <View style={styles.classCountsRow}>
+              <Text style={[styles.classCount, { color: wCount > 0 ? row.color : '#444' }]}>{wCount}</Text>
+              <Text style={styles.classCountSep}>/</Text>
+              <Text style={[styles.classCount, { color: bCount > 0 ? row.color : '#444' }]}>{bCount}</Text>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+// ─── Componente: Lista de lances com classificação ────────────────────────────
 
 function MoveList({
   moves,
   currentIndex,
   onSelect,
+  getClassification,
 }: {
   moves: Array<{ move_number: number; san: string }>;
   currentIndex: number;
   onSelect: (index: number) => void;
+  getClassification: (index: number) => typeof CLASSIFICATION_CONFIG[MoveClassification] | null;
 }) {
-  // Agrupar lances em pares (brancas + pretas)
-  const pairs: Array<{ moveNum: number; white: { san: string; idx: number } | null; black: { san: string; idx: number } | null }> = [];
+  const pairs: Array<{
+    moveNum: number;
+    white: { san: string; idx: number } | null;
+    black: { san: string; idx: number } | null;
+  }> = [];
+
   for (let i = 0; i < moves.length; i += 2) {
     const pairNum = Math.floor(i / 2) + 1;
     pairs.push({
@@ -123,26 +230,50 @@ function MoveList({
       {pairs.map((pair) => (
         <View key={pair.moveNum} style={styles.movePair}>
           <Text style={styles.movePairNum}>{pair.moveNum}.</Text>
-          <TouchableOpacity
-            style={[styles.moveBtn, pair.white && currentIndex === pair.white.idx && styles.moveBtnActive]}
-            onPress={() => pair.white && onSelect(pair.white.idx)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.moveBtnText, pair.white && currentIndex === pair.white.idx && styles.moveBtnTextActive]}>
-              {pair.white?.san ?? ''}
-            </Text>
-          </TouchableOpacity>
-          {pair.black && (
+
+          {/* Lance das brancas */}
+          {pair.white ? (
+            <TouchableOpacity
+              style={[styles.moveBtn, currentIndex === pair.white.idx && styles.moveBtnActive]}
+              onPress={() => onSelect(pair.white!.idx)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.moveBtnInner}>
+                <Text style={[styles.moveBtnText, currentIndex === pair.white.idx && styles.moveBtnTextActive]}>
+                  {pair.white.san}
+                </Text>
+                {(() => {
+                  const cls = getClassification(pair.white.idx);
+                  if (!cls || !cls.symbol) return null;
+                  return (
+                    <Text style={[styles.moveClassSymbol, { color: cls.color }]}>{cls.symbol}</Text>
+                  );
+                })()}
+              </View>
+            </TouchableOpacity>
+          ) : <View style={styles.moveBtn} />}
+
+          {/* Lance das pretas */}
+          {pair.black ? (
             <TouchableOpacity
               style={[styles.moveBtn, currentIndex === pair.black.idx && styles.moveBtnActive]}
               onPress={() => onSelect(pair.black!.idx)}
               activeOpacity={0.7}
             >
-              <Text style={[styles.moveBtnText, currentIndex === pair.black.idx && styles.moveBtnTextActive]}>
-                {pair.black.san}
-              </Text>
+              <View style={styles.moveBtnInner}>
+                <Text style={[styles.moveBtnText, currentIndex === pair.black.idx && styles.moveBtnTextActive]}>
+                  {pair.black.san}
+                </Text>
+                {(() => {
+                  const cls = getClassification(pair.black.idx);
+                  if (!cls || !cls.symbol) return null;
+                  return (
+                    <Text style={[styles.moveClassSymbol, { color: cls.color }]}>{cls.symbol}</Text>
+                  );
+                })()}
+              </View>
             </TouchableOpacity>
-          )}
+          ) : <View style={styles.moveBtn} />}
         </View>
       ))}
     </ScrollView>
@@ -156,6 +287,7 @@ export default function GameReplayScreen() {
   const router = useRouter();
   const boardRef = useRef<ChessboardRef>(null);
   const [boardReady, setBoardReady] = useState(false);
+  const [analysisEnabled, setAnalysisEnabled] = useState(false);
 
   const {
     game,
@@ -180,23 +312,47 @@ export default function GameReplayScreen() {
     refresh,
   } = useGameReplay(gameId ?? null);
 
+  // Construir array de FENs para análise: [initial, ...fen_after_each_move]
+  const fens = useMemo(() => {
+    if (!moves.length) return [];
+    return [INITIAL_FEN, ...moves.map((m) => m.fen_after)];
+  }, [moves]);
+
+  const {
+    analysis,
+    loading: analysisLoading,
+    error: analysisError,
+    getClassification,
+    retry: retryAnalysis,
+  } = useMoveAnalysis(fens, analysisEnabled);
+
+  // Avaliação do lance atual
+  const currentMoveAnalysis = currentIndex >= 0 ? analysis?.moves[currentIndex] : null;
+  const currentScore = currentMoveAnalysis?.scoreAfter ?? 0;
+  const currentMate = currentMoveAnalysis?.mate ?? null;
+
   // Sincronizar o tabuleiro com o FEN atual
   useEffect(() => {
     if (!boardReady) return;
     try {
       boardRef.current?.resetBoard(currentFen);
-      // Destacar o último lance
       if (currentMove) {
         boardRef.current?.resetAllHighlightedSquares();
-        boardRef.current?.highlight({ square: currentMove.from_square as any, color: '#d4a84355' });
-        boardRef.current?.highlight({ square: currentMove.to_square as any, color: '#d4a843aa' });
+        // Colorir o destaque com a cor da classificação se disponível
+        const cls = currentMoveAnalysis
+          ? CLASSIFICATION_CONFIG[currentMoveAnalysis.classification]
+          : null;
+        const highlightColor = cls ? cls.color + '44' : '#d4a84355';
+        const highlightColorDest = cls ? cls.color + 'aa' : '#d4a843aa';
+        boardRef.current?.highlight({ square: currentMove.from_square as any, color: highlightColor });
+        boardRef.current?.highlight({ square: currentMove.to_square as any, color: highlightColorDest });
       } else {
         boardRef.current?.resetAllHighlightedSquares();
       }
     } catch {
       // Ignorar erros de sincronização do tabuleiro
     }
-  }, [currentFen, currentMove, boardReady]);
+  }, [currentFen, currentMove, boardReady, currentMoveAnalysis]);
 
   const handleBoardReady = useCallback(() => {
     setBoardReady(true);
@@ -268,7 +424,16 @@ export default function GameReplayScreen() {
             {formatDuration(game.started_at, game.ended_at)}
           </Text>
         </View>
-        <View style={{ width: 36 }} />
+        {/* Botão de análise */}
+        <TouchableOpacity
+          style={[styles.analyzeBtn, analysisEnabled && styles.analyzeBtnActive]}
+          onPress={() => setAnalysisEnabled((v) => !v)}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.analyzeBtnText, analysisEnabled && styles.analyzeBtnTextActive]}>
+            {analysisEnabled ? '🔍' : '🔍'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -285,36 +450,59 @@ export default function GameReplayScreen() {
           side="black"
           isWinner={isBlackWinner}
           timeLeft={blackTimeLeft}
+          accuracy={analysis?.black.accuracy ?? null}
         />
 
-        {/* Tabuleiro */}
-        <View style={styles.boardContainer}>
-          <Chessboard
-            ref={boardRef}
-            fen={INITIAL_FEN}
-            boardSize={BOARD_SIZE}
-            gestureEnabled={false}
-            withLetters
-            withNumbers
-            colors={{
-              white: '#f0d9b5',
-              black: '#b58863',
-              lastMoveHighlight: '#d4a84333',
-              checkmateHighlight: '#ef444466',
-            }}
-            durations={{ move: 150 }}
-            onMove={handleBoardReady as any}
-          />
-          {/* Indicador de posição */}
-          <View style={styles.positionIndicator}>
-            <Text style={styles.positionText}>
-              {currentIndex === -1
-                ? 'Posição inicial'
-                : `Lance ${currentIndex + 1} de ${totalMoves}`}
-            </Text>
+        {/* Tabuleiro + barra de avaliação */}
+        <View style={styles.boardRow}>
+          {/* Barra de avaliação (só quando análise ativa) */}
+          {analysisEnabled && analysis && (
+            <EvalBar score={currentScore} mate={currentMate} />
+          )}
+
+          {/* Tabuleiro */}
+          <View style={styles.boardContainer}>
+            <Chessboard
+              ref={boardRef}
+              fen={INITIAL_FEN}
+              boardSize={analysisEnabled && analysis ? BOARD_SIZE - 24 : BOARD_SIZE}
+              gestureEnabled={false}
+              withLetters
+              withNumbers
+              colors={{
+                white: '#f0d9b5',
+                black: '#b58863',
+                lastMoveHighlight: '#d4a84333',
+                checkmateHighlight: '#ef444466',
+              }}
+              durations={{ move: 150 }}
+              onMove={handleBoardReady as any}
+            />
+          </View>
+        </View>
+
+        {/* Indicador de posição + classificação do lance */}
+        <View style={styles.positionIndicator}>
+          <Text style={styles.positionText}>
+            {currentIndex === -1
+              ? 'Posição inicial'
+              : `Lance ${currentIndex + 1} de ${totalMoves}`}
+          </Text>
+          <View style={styles.positionRight}>
             {currentMove && (
               <Text style={styles.sanText}>{currentMove.san}</Text>
             )}
+            {currentMoveAnalysis && (() => {
+              const cls = CLASSIFICATION_CONFIG[currentMoveAnalysis.classification];
+              return (
+                <View style={[styles.classificationBadge, { backgroundColor: cls.bgColor, borderColor: cls.color + '66' }]}>
+                  {cls.symbol ? (
+                    <Text style={[styles.classificationSymbol, { color: cls.color }]}>{cls.symbol}</Text>
+                  ) : null}
+                  <Text style={[styles.classificationLabel, { color: cls.color }]}>{cls.label}</Text>
+                </View>
+              );
+            })()}
           </View>
         </View>
 
@@ -324,6 +512,7 @@ export default function GameReplayScreen() {
           side="white"
           isWinner={isWhiteWinner}
           timeLeft={whiteTimeLeft}
+          accuracy={analysis?.white.accuracy ?? null}
         />
 
         {/* Controles de navegação */}
@@ -333,56 +522,26 @@ export default function GameReplayScreen() {
             <View
               style={[
                 styles.progressFill,
-                {
-                  width: `${totalMoves > 0 ? ((currentIndex + 1) / totalMoves) * 100 : 0}%`,
-                },
+                { width: `${totalMoves > 0 ? ((currentIndex + 1) / totalMoves) * 100 : 0}%` },
               ]}
             />
           </View>
 
           {/* Botões de navegação */}
           <View style={styles.navButtons}>
-            <TouchableOpacity
-              style={[styles.navBtn, !canGoPrev && styles.navBtnDisabled]}
-              onPress={goToStart}
-              disabled={!canGoPrev}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={[styles.navBtn, !canGoPrev && styles.navBtnDisabled]} onPress={goToStart} disabled={!canGoPrev} activeOpacity={0.7}>
               <Text style={[styles.navBtnText, !canGoPrev && styles.navBtnTextDisabled]}>⏮</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.navBtn, !canGoPrev && styles.navBtnDisabled]}
-              onPress={goToPrev}
-              disabled={!canGoPrev}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={[styles.navBtn, !canGoPrev && styles.navBtnDisabled]} onPress={goToPrev} disabled={!canGoPrev} activeOpacity={0.7}>
               <Text style={[styles.navBtnText, !canGoPrev && styles.navBtnTextDisabled]}>◀</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.navBtnPlay, isPlaying && styles.navBtnPlayActive]}
-              onPress={togglePlay}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity style={[styles.navBtnPlay, isPlaying && styles.navBtnPlayActive]} onPress={togglePlay} activeOpacity={0.8}>
               <Text style={styles.navBtnPlayText}>{isPlaying ? '⏸' : '▶'}</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.navBtn, !canGoNext && styles.navBtnDisabled]}
-              onPress={goToNext}
-              disabled={!canGoNext}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={[styles.navBtn, !canGoNext && styles.navBtnDisabled]} onPress={goToNext} disabled={!canGoNext} activeOpacity={0.7}>
               <Text style={[styles.navBtnText, !canGoNext && styles.navBtnTextDisabled]}>▶</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.navBtn, !canGoNext && styles.navBtnDisabled]}
-              onPress={goToEnd}
-              disabled={!canGoNext}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={[styles.navBtn, !canGoNext && styles.navBtnDisabled]} onPress={goToEnd} disabled={!canGoNext} activeOpacity={0.7}>
               <Text style={[styles.navBtnText, !canGoNext && styles.navBtnTextDisabled]}>⏭</Text>
             </TouchableOpacity>
           </View>
@@ -405,6 +564,28 @@ export default function GameReplayScreen() {
           </View>
         </View>
 
+        {/* Banner de análise em progresso */}
+        {analysisEnabled && analysisLoading && (
+          <View style={styles.analysisBanner}>
+            <ActivityIndicator size="small" color="#d4a843" />
+            <Text style={styles.analysisBannerText}>Analisando com Stockfish...</Text>
+          </View>
+        )}
+
+        {analysisEnabled && analysisError && (
+          <View style={styles.analysisErrorBanner}>
+            <Text style={styles.analysisErrorText}>⚠️ {analysisError}</Text>
+            <TouchableOpacity onPress={retryAnalysis} style={styles.analysisRetryBtn}>
+              <Text style={styles.analysisRetryText}>Tentar novamente</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Resumo de precisão */}
+        {analysisEnabled && analysis && (
+          <AccuracySummary white={analysis.white} black={analysis.black} />
+        )}
+
         {/* Lista de lances */}
         {totalMoves > 0 ? (
           <View style={styles.moveListContainer}>
@@ -413,6 +594,7 @@ export default function GameReplayScreen() {
               moves={moves}
               currentIndex={currentIndex}
               onSelect={goToIndex}
+              getClassification={getClassification}
             />
           </View>
         ) : (
@@ -445,6 +627,19 @@ const styles = StyleSheet.create({
   headerCenter: { flex: 1, alignItems: 'center' },
   headerTitle: { color: '#f0f0f0', fontSize: 17, fontWeight: '600' },
   headerSubtitle: { color: '#9a9a9a', fontSize: 12, marginTop: 1 },
+  analyzeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2c2c2c',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+  },
+  analyzeBtnActive: { backgroundColor: '#d4a84322', borderColor: '#d4a843' },
+  analyzeBtnText: { fontSize: 16 },
+  analyzeBtnTextActive: { color: '#d4a843' },
 
   scrollContent: { paddingBottom: 40 },
 
@@ -475,10 +670,7 @@ const styles = StyleSheet.create({
     borderColor: '#3a3a3a',
     gap: 12,
   },
-  playerCardWinner: {
-    borderColor: '#d4a843',
-    backgroundColor: '#2c2c2c',
-  },
+  playerCardWinner: { borderColor: '#d4a843' },
   playerAvatar: {
     width: 40,
     height: 40,
@@ -493,33 +685,77 @@ const styles = StyleSheet.create({
   playerName: { color: '#f0f0f0', fontSize: 14, fontWeight: '600', flex: 1 },
   winnerBadge: { fontSize: 14 },
   playerRating: { color: '#9a9a9a', fontSize: 12, marginTop: 2 },
+  accuracyBadge: { alignItems: 'center' },
+  accuracyValue: { color: '#d4a843', fontSize: 16, fontWeight: '700' },
+  accuracyLabel: { color: '#9a9a9a', fontSize: 10 },
 
-  // Board
-  boardContainer: {
+  // Board row (board + eval bar)
+  boardRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginVertical: 8,
     paddingHorizontal: 16,
+    gap: 8,
   },
+  boardContainer: { alignItems: 'center' },
+
+  // Eval bar
+  evalBarContainer: {
+    width: 20,
+    alignItems: 'center',
+    gap: 4,
+  },
+  evalBarTrack: {
+    width: 14,
+    height: BOARD_SIZE - 24,
+    borderRadius: 4,
+    overflow: 'hidden',
+    flexDirection: 'column',
+  },
+  evalBarBlack: { backgroundColor: '#2c2c2c', minHeight: 4 },
+  evalBarWhite: { backgroundColor: '#f0f0f0', minHeight: 4 },
+  evalScore: {
+    color: '#9a9a9a',
+    fontSize: 9,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+
+  // Position indicator
   positionIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    width: BOARD_SIZE,
-    marginTop: 8,
+    marginHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 4,
     paddingHorizontal: 4,
   },
   positionText: { color: '#9a9a9a', fontSize: 12 },
+  positionRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   sanText: {
     color: '#d4a843',
     fontSize: 14,
     fontWeight: '700',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
+  classificationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    gap: 3,
+  },
+  classificationSymbol: { fontSize: 11, fontWeight: '700' },
+  classificationLabel: { fontSize: 11, fontWeight: '600' },
 
   // Controls
   controls: {
     marginHorizontal: 16,
-    marginTop: 12,
+    marginTop: 8,
     backgroundColor: '#2c2c2c',
     borderRadius: 16,
     padding: 16,
@@ -565,8 +801,6 @@ const styles = StyleSheet.create({
   },
   navBtnPlayActive: { backgroundColor: '#b8923a' },
   navBtnPlayText: { color: '#1e1e1e', fontSize: 22, fontWeight: 'bold' },
-
-  // Speed
   speedRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -585,6 +819,78 @@ const styles = StyleSheet.create({
   speedBtnActive: { backgroundColor: '#d4a84322', borderColor: '#d4a843' },
   speedBtnText: { color: '#9a9a9a', fontSize: 12, fontWeight: '500' },
   speedBtnTextActive: { color: '#d4a843' },
+
+  // Analysis banners
+  analysisBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginHorizontal: 16,
+    marginTop: 12,
+    backgroundColor: '#2c2c2c',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#d4a84344',
+  },
+  analysisBannerText: { color: '#d4a843', fontSize: 13 },
+  analysisErrorBanner: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    backgroundColor: '#ef444411',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#ef444444',
+    alignItems: 'center',
+    gap: 8,
+  },
+  analysisErrorText: { color: '#ef4444', fontSize: 13, textAlign: 'center' },
+  analysisRetryBtn: {
+    backgroundColor: '#ef444422',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#ef4444',
+  },
+  analysisRetryText: { color: '#ef4444', fontSize: 12, fontWeight: '600' },
+
+  // Accuracy summary
+  accuracySummary: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    backgroundColor: '#2c2c2c',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+  },
+  accuracyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    gap: 24,
+  },
+  accuracyCol: { alignItems: 'center', flex: 1 },
+  accuracyBigValue: { color: '#d4a843', fontSize: 28, fontWeight: '700' },
+  accuracyColLabel: { color: '#9a9a9a', fontSize: 12, marginTop: 2 },
+  accuracyDivider: { width: 1, height: 40, backgroundColor: '#3a3a3a' },
+  classRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderTopWidth: 0.5,
+    borderTopColor: '#3a3a3a',
+    gap: 8,
+  },
+  classSymbol: { fontSize: 13, fontWeight: '700', width: 24, textAlign: 'center' },
+  classLabel: { color: '#9a9a9a', fontSize: 13, flex: 1 },
+  classCountsRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  classCount: { fontSize: 13, fontWeight: '600', width: 20, textAlign: 'center' },
+  classCountSep: { color: '#444', fontSize: 12 },
 
   // Move list
   moveListContainer: {
@@ -624,12 +930,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   moveBtnActive: { backgroundColor: '#d4a843' },
+  moveBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   moveBtnText: {
     color: '#9a9a9a',
     fontSize: 13,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   moveBtnTextActive: { color: '#1e1e1e', fontWeight: '700' },
+  moveClassSymbol: { fontSize: 11, fontWeight: '700' },
 
   // No moves
   noMovesContainer: {

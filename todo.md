@@ -118,3 +118,19 @@
 - [x] Reprodução automática (play/pause) com velocidade ajustável (0.5x, 1x, 2x, 3x)
 - [x] Destaque visual dos quadrados de origem e destino do lance atual
 - [x] Integrar botão de replay no histórico do perfil público
+
+## Análise de Precisão por Lance
+- [x] Instalar Stockfish no servidor backend (via npm + apt)
+- [x] Endpoint tRPC chess.analyzeMove com Stockfish (profundidade configurável)
+- [x] Endpoint tRPC chess.analyzeGame para análise completa de partida
+- [x] Classificador de lançes: Brilhante (!!) / Excelente (!) / Bom / Imprecisão (?!) / Erro (?) / Blunder (??)
+- [x] Hook useMoveAnalysis: analisa todos os lançes em background via tRPC
+- [x] Fórmula de precisão (0-100%) baseada na perda média de centipeões
+- [x] Barra de avaliação lateral no tabuleiro (brancas/pretas) sincronizada
+- [x] Badge de classificação no indicador de posição (cor + símbolo + label)
+- [x] Destaque colorido das casas de origem/destino com a cor da classificação
+- [x] Símbolo de classificação (!!, !, ?!, ?, ??) na lista de lançes
+- [x] Resumo de análise: precisão por jogador e contagem de cada classificação
+- [x] Botão de análise no header (ativar/desativar)
+- [x] Precisão exibida nos cards de jogadores (brancas/pretas)
+- [x] Banner de progresso durante a análise com Stockfish
