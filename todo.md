@@ -186,6 +186,15 @@
 - [x] Indicadores visuais de progresso (resolvido/não resolvido) na lista
 - [x] Integração com a aba Puzzles (modo "Puzzles Personalizados" funcional)
 
+## Corrida de Puzzles (Puzzle Rush)
+- [ ] Migração SQL: puzzle_rush_sessions, get_rush_puzzles, get_rush_leaderboard, get_my_rush_best
+- [ ] Hook usePuzzleRush: buscar puzzles adaptativos, salvar sessão, recorde e leaderboard
+- [ ] Tela puzzle-rush: seleção de modo (3min, 5min, sobrevivência) com recorde pessoal real
+- [ ] Tela puzzle-rush-game: tabuleiro interativo, timer regressivo, vidas (survival), score ao vivo
+- [ ] Tela de resultado: score final, novo recorde, botão de compartilhamento
+- [ ] Leaderboard com filtros de período (hoje, semana, mês, todos)
+- [ ] Integração com a aba Puzzles (modo Rush navega para tela real)
+
 ## Paridade de Funcionalidades (Mobile - faltando)
 - [ ] Tela Watch: assistir partidas ao vivo
 - [ ] Tela Variantes de xadrez (Chess960, Bughouse, etc.)

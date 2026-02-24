@@ -276,6 +276,8 @@ export default function PuzzlesScreen() {
       router.push('/daily-puzzle');
     } else if (modeId === 'custom') {
       router.push('/puzzle-problems' as any);
+    } else if (modeId === 'rush') {
+      router.push('/puzzle-rush' as any);
     } else {
       setSelectedMode(modeId);
     }

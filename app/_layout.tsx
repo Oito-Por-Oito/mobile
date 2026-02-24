@@ -129,6 +129,8 @@ export default function RootLayout() {
               <Stack.Screen name="daily-puzzle" />
               <Stack.Screen name="puzzle-problems" />
               <Stack.Screen name="puzzle-solve" />
+              <Stack.Screen name="puzzle-rush" />
+              <Stack.Screen name="puzzle-rush-game" options={{ headerShown: false, gestureEnabled: false }} />
             </Stack>
           </AuthProvider>
           <StatusBar style="auto" />
