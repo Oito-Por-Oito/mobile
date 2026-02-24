@@ -274,6 +274,8 @@ export default function PuzzlesScreen() {
   const handleModeSelect = (modeId: string) => {
     if (modeId === 'daily') {
       router.push('/daily-puzzle');
+    } else if (modeId === 'custom') {
+      router.push('/puzzle-problems' as any);
     } else {
       setSelectedMode(modeId);
     }

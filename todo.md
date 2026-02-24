@@ -176,6 +176,16 @@
 - [x] Compartilhar resultado (emoji grid)
 - [x] Integração com a tela de Puzzles existente (modo Puzzle Diário funcional)
 
+## Problemas de Xadrez
+- [x] Tabela puzzle_attempts no Supabase com RLS
+- [x] Funções SQL: get_puzzles_list, get_next_puzzle, get_user_puzzle_stats
+- [x] Hook usePuzzleProblems: listar, filtrar, buscar próximo, registrar tentativa
+- [x] Tela puzzle-problems: lista de puzzles com filtros (dificuldade, tema)
+- [x] Tela puzzle-solve: tabuleiro interativo com validação multi-lance, dicas, timer
+- [x] Card de estatísticas do usuário (resolvidos, precisão, rating de puzzles)
+- [x] Indicadores visuais de progresso (resolvido/não resolvido) na lista
+- [x] Integração com a aba Puzzles (modo "Puzzles Personalizados" funcional)
+
 ## Paridade de Funcionalidades (Mobile - faltando)
 - [ ] Tela Watch: assistir partidas ao vivo
 - [ ] Tela Variantes de xadrez (Chess960, Bughouse, etc.)
