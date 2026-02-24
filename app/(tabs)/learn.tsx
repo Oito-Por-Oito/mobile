@@ -84,6 +84,23 @@ export default function LearnScreen() {
           </Text>
         </View>
 
+        {/* Quick links to subsections */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+          {[
+            { label: '🎓 Cursos', route: '/learn/courses' },
+            { label: '📊 Análise', route: '/learn/analysis' },
+            { label: '🏫 Sala de Aula', route: '/learn/classroom' },
+            { label: '🎯 Prática', route: '/learn/practice' },
+            { label: '📚 Biblioteca', route: '/learn/library' },
+            { label: '💡 Ideias Críticas', route: '/learn/critical-ideas' },
+          ].map(link => (
+            <TouchableOpacity key={link.route} onPress={() => router.push(link.route as any)}
+              style={{ backgroundColor: '#2c2c2c', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: '#3a3a3a' }}>
+              <Text style={{ color: '#d4a843', fontSize: 12, fontWeight: '600' }}>{link.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {/* Tabs */}
         <View style={{ flexDirection: 'row', backgroundColor: '#2c2c2c', borderRadius: 12, padding: 4, marginBottom: 20 }}>
           {[

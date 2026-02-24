@@ -163,3 +163,18 @@
 - [x] Aceitar desafio cria partida no Supabase e redireciona para jogo (web)
 - [x] Paridade total: Ranking, Perfil Público e Amizades reais também implementados no web
 - [x] 52 testes passando (6 novos de challenge, 0 erros TypeScript)
+
+## Paridade de Funcionalidades (Mobile - faltando)
+- [ ] Tela Watch: assistir partidas ao vivo
+- [ ] Tela Variantes de xadrez (Chess960, Bughouse, etc.)
+- [ ] Tela Treinador interativo (/play/trainer)
+- [ ] Tela Histórico de Partidas (/history)
+- [ ] Tela Rankings Mundiais por país (/ratings-players)
+- [ ] Tela Doações (/donate)
+- [ ] Subseções de Aprender: Cursos, Análise, Sala de Aula, Prática, Biblioteca, Ideias Críticas
+- [ ] Subseções de Notícias: Chess Today, Artigos, Rankings, Top Players
+- [ ] Subseções de Mais: Aberturas, Apps, Explorador, Xadrez Solo
+
+## Paridade de Funcionalidades (Web - faltando)
+- [ ] Página Estatísticas detalhadas (/stats)
+- [ ] Página Metas do jogador (/goals)

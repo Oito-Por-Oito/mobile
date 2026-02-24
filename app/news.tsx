@@ -81,6 +81,19 @@ export default function NewsScreen() {
           <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#f0f0f0' }}>📰 Notícias</Text>
         </View>
 
+        {/* Quick links to subsections */}
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+          {[
+            { label: '📰 Xadrez Hoje', route: '/news/chess-today' },
+            { label: '📝 Artigos', route: '/news/articles' },
+          ].map(link => (
+            <TouchableOpacity key={link.route} onPress={() => router.push(link.route as any)}
+              style={{ backgroundColor: '#2c2c2c', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: '#3a3a3a' }}>
+              <Text style={{ color: '#d4a843', fontSize: 12, fontWeight: '600' }}>{link.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {/* Category filter */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
           <View style={{ flexDirection: 'row', gap: 8 }}>

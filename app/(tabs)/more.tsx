@@ -18,6 +18,21 @@ const QUICK_STATS_ITEMS = [
   { icon: '🏆', title: 'Torneios', description: 'Participe de torneios online', route: '/tournaments' },
   { icon: '📊', title: 'Estatísticas', description: 'Análise detalhada do seu jogo', route: '/stats' },
   { icon: '🎯', title: 'Metas', description: 'Defina e acompanhe seus objetivos', route: '/goals' },
+  { icon: '🌍', title: 'Rankings Mundiais', description: 'Jogadores ranqueados pela FIDE', route: '/ratings-players' },
+];
+
+const WATCH_ITEMS = [
+  { icon: '📺', title: 'Assistir Partidas', description: 'Acompanhe partidas ao vivo', route: '/watch/index' },
+  { icon: '🎮', title: 'Variantes', description: 'Chess960, Bughouse e mais', route: '/variants' },
+  { icon: '🤖', title: 'Treinador', description: 'Treine com o assistente interativo', route: '/trainer' },
+  { icon: '📜', title: 'Histórico', description: 'Reveja suas partidas anteriores', route: '/history' },
+];
+
+const TOOLS_ITEMS = [
+  { icon: '♟', title: 'Aberturas', description: 'Explore o árvore de aberturas', route: '/mais/openings' },
+  { icon: '🔭', title: 'Explorador', description: 'Analise posições e estatísticas', route: '/mais/explorer' },
+  { icon: '🧩', title: 'Xadrez Solo', description: 'Jogue e analise sozinho', route: '/mais/solo' },
+  { icon: '💝', title: 'Apoiar', description: 'Apoie o desenvolvimento da plataforma', route: '/donate' },
 ];
 
 export default function MoreScreen() {
@@ -154,6 +169,74 @@ export default function MoreScreen() {
               style={{
                 flexDirection: 'row', alignItems: 'center', padding: 16,
                 borderBottomWidth: idx < QUICK_STATS_ITEMS.length - 1 ? 1 : 0,
+                borderBottomColor: '#3a3a3a',
+              }}
+            >
+              <View style={{
+                width: 40, height: 40, borderRadius: 20,
+                backgroundColor: '#3a3a3a', alignItems: 'center', justifyContent: 'center',
+                marginRight: 14,
+              }}>
+                <Text style={{ fontSize: 20 }}>{item.icon}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: '#f0f0f0', fontSize: 15, fontWeight: '500' }}>{item.title}</Text>
+                <Text style={{ color: '#9a9a9a', fontSize: 12 }}>{item.description}</Text>
+              </View>
+              <Text style={{ color: '#4a4a4a', fontSize: 18 }}>›</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Watch & Play Section */}
+        <Text style={{ color: '#d4a843', fontSize: 14, fontWeight: '600', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>
+          Assistir & Jogar
+        </Text>
+        <View style={{
+          backgroundColor: '#2c2c2c', borderRadius: 16, marginBottom: 20,
+          borderWidth: 1, borderColor: '#4a4a4a', overflow: 'hidden',
+        }}>
+          {WATCH_ITEMS.map((item, idx) => (
+            <TouchableOpacity
+              key={item.title}
+              onPress={() => handleNavigation(item.route)}
+              style={{
+                flexDirection: 'row', alignItems: 'center', padding: 16,
+                borderBottomWidth: idx < WATCH_ITEMS.length - 1 ? 1 : 0,
+                borderBottomColor: '#3a3a3a',
+              }}
+            >
+              <View style={{
+                width: 40, height: 40, borderRadius: 20,
+                backgroundColor: '#3a3a3a', alignItems: 'center', justifyContent: 'center',
+                marginRight: 14,
+              }}>
+                <Text style={{ fontSize: 20 }}>{item.icon}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: '#f0f0f0', fontSize: 15, fontWeight: '500' }}>{item.title}</Text>
+                <Text style={{ color: '#9a9a9a', fontSize: 12 }}>{item.description}</Text>
+              </View>
+              <Text style={{ color: '#4a4a4a', fontSize: 18 }}>›</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Tools Section */}
+        <Text style={{ color: '#d4a843', fontSize: 14, fontWeight: '600', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>
+          Ferramentas
+        </Text>
+        <View style={{
+          backgroundColor: '#2c2c2c', borderRadius: 16, marginBottom: 20,
+          borderWidth: 1, borderColor: '#4a4a4a', overflow: 'hidden',
+        }}>
+          {TOOLS_ITEMS.map((item, idx) => (
+            <TouchableOpacity
+              key={item.title}
+              onPress={() => handleNavigation(item.route)}
+              style={{
+                flexDirection: 'row', alignItems: 'center', padding: 16,
+                borderBottomWidth: idx < TOOLS_ITEMS.length - 1 ? 1 : 0,
                 borderBottomColor: '#3a3a3a',
               }}
             >

@@ -109,6 +109,23 @@ export default function RootLayout() {
               <Stack.Screen name="stats" />
               <Stack.Screen name="goals" />
               <Stack.Screen name="challenge/[challengeId]" />
+              <Stack.Screen name="history" />
+              <Stack.Screen name="trainer" />
+              <Stack.Screen name="variants" />
+              <Stack.Screen name="ratings-players" />
+              <Stack.Screen name="donate" />
+              <Stack.Screen name="watch/index" />
+              <Stack.Screen name="learn/courses" />
+              <Stack.Screen name="learn/analysis" />
+              <Stack.Screen name="learn/classroom" />
+              <Stack.Screen name="learn/practice" />
+              <Stack.Screen name="learn/library" />
+              <Stack.Screen name="learn/critical-ideas" />
+              <Stack.Screen name="news/chess-today" />
+              <Stack.Screen name="news/articles" />
+              <Stack.Screen name="mais/openings" />
+              <Stack.Screen name="mais/explorer" />
+              <Stack.Screen name="mais/solo" />
             </Stack>
           </AuthProvider>
           <StatusBar style="auto" />
