@@ -164,6 +164,18 @@
 - [x] Paridade total: Ranking, Perfil Público e Amizades reais também implementados no web
 - [x] 52 testes passando (6 novos de challenge, 0 erros TypeScript)
 
+## Puzzle Diário
+- [x] Migração SQL: tabelas puzzles, daily_puzzles, daily_puzzle_attempts
+- [x] Hook useDailyPuzzle: buscar puzzle do dia, registrar tentativa, calcular streak
+- [x] Tela de Puzzle Diário com tabuleiro interativo real (react-native-chessboard)
+- [x] Validação de solução multi-lance com feedback visual (correto/errado)
+- [x] Sistema de dicas (até 3 por puzzle)
+- [x] Timer de tempo gasto na resolução
+- [x] Card de streak na tela de puzzles (dias consecutivos)
+- [x] Histórico semanal (7 dias) com indicadores visuais
+- [x] Compartilhar resultado (emoji grid)
+- [x] Integração com a tela de Puzzles existente (modo Puzzle Diário funcional)
+
 ## Paridade de Funcionalidades (Mobile - faltando)
 - [ ] Tela Watch: assistir partidas ao vivo
 - [ ] Tela Variantes de xadrez (Chess960, Bughouse, etc.)

@@ -126,6 +126,7 @@ export default function RootLayout() {
               <Stack.Screen name="mais/openings" />
               <Stack.Screen name="mais/explorer" />
               <Stack.Screen name="mais/solo" />
+              <Stack.Screen name="daily-puzzle" />
             </Stack>
           </AuthProvider>
           <StatusBar style="auto" />

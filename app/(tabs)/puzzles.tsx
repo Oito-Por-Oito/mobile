@@ -7,11 +7,14 @@ import { Chess } from 'chess.js';
 import Chessboard from 'react-native-chessboard';
 import { ScreenContainer } from '@/components/screen-container';
 import { useSupabaseAuth } from '@/lib/auth-context';
+import { useDailyPuzzle } from '@/hooks/supabase/use-daily-puzzle';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BOARD_SIZE = Math.min(SCREEN_WIDTH - 32, 380);
 
-// Sample puzzles (in production these would come from a database)
+// ─────────────────────────────────────────────────────────────────────────────
+// Sample puzzles for non-daily modes (Rush, Battle, Custom)
+// ─────────────────────────────────────────────────────────────────────────────
 const SAMPLE_PUZZLES = [
   {
     id: 1,
@@ -55,6 +58,9 @@ const PUZZLE_MODES = [
   { id: 'custom', icon: '🎯', title: 'Puzzles Personalizados', description: 'Filtre por tema e dificuldade', color: '#60a5fa' },
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PuzzleGame (for non-daily modes)
+// ─────────────────────────────────────────────────────────────────────────────
 function PuzzleGame({ puzzle, onSolve, onSkip }: {
   puzzle: typeof SAMPLE_PUZZLES[0];
   onSolve: () => void;
@@ -94,16 +100,13 @@ function PuzzleGame({ puzzle, onSolve, onSkip }: {
 
   return (
     <View style={{ alignItems: 'center' }}>
-      {/* Puzzle info */}
       <View style={{
         width: BOARD_SIZE, backgroundColor: '#2c2c2c', borderRadius: 12,
         padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#4a4a4a',
       }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={{ color: '#d4a843', fontWeight: 'bold', fontSize: 16 }}>{puzzle.title}</Text>
-          <View style={{
-            backgroundColor: '#3a3a3a', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
-          }}>
+          <View style={{ backgroundColor: '#3a3a3a', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 }}>
             <Text style={{ color: '#9a9a9a', fontSize: 12 }}>{puzzle.difficulty}</Text>
           </View>
         </View>
@@ -113,7 +116,6 @@ function PuzzleGame({ puzzle, onSolve, onSkip }: {
         </Text>
       </View>
 
-      {/* Status bar */}
       {status !== 'playing' && (
         <View style={{
           width: BOARD_SIZE, borderRadius: 10, padding: 10, marginBottom: 8,
@@ -127,10 +129,8 @@ function PuzzleGame({ puzzle, onSolve, onSkip }: {
         </View>
       )}
 
-      {/* Board */}
       <View style={{
-        width: BOARD_SIZE, height: BOARD_SIZE,
-        borderRadius: 8, overflow: 'hidden',
+        width: BOARD_SIZE, height: BOARD_SIZE, borderRadius: 8, overflow: 'hidden',
         borderWidth: 2, borderColor: status === 'correct' ? '#22c55e' : status === 'wrong' ? '#ef4444' : '#4a4a4a',
       }}>
         <Chessboard
@@ -142,23 +142,16 @@ function PuzzleGame({ puzzle, onSolve, onSkip }: {
         />
       </View>
 
-      {/* Controls */}
       <View style={{ flexDirection: 'row', gap: 10, width: BOARD_SIZE, marginTop: 10 }}>
         <TouchableOpacity
           onPress={() => setHint(true)}
-          style={{
-            backgroundColor: '#3a3a3a', borderRadius: 10, padding: 12,
-            flex: 1, alignItems: 'center', borderWidth: 1, borderColor: '#4a4a4a',
-          }}
+          style={{ backgroundColor: '#3a3a3a', borderRadius: 10, padding: 12, flex: 1, alignItems: 'center', borderWidth: 1, borderColor: '#4a4a4a' }}
         >
           <Text style={{ color: '#f0f0f0', fontSize: 13 }}>💡 Dica</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={onSkip}
-          style={{
-            backgroundColor: '#3a3a3a', borderRadius: 10, padding: 12,
-            flex: 1, alignItems: 'center', borderWidth: 1, borderColor: '#4a4a4a',
-          }}
+          style={{ backgroundColor: '#3a3a3a', borderRadius: 10, padding: 12, flex: 1, alignItems: 'center', borderWidth: 1, borderColor: '#4a4a4a' }}
         >
           <Text style={{ color: '#f0f0f0', fontSize: 13 }}>⏭ Pular</Text>
         </TouchableOpacity>
@@ -178,6 +171,98 @@ function PuzzleGame({ puzzle, onSolve, onSkip }: {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Daily Puzzle preview card (shown on the main puzzles screen)
+// ─────────────────────────────────────────────────────────────────────────────
+function DailyPuzzleCard({ onPress }: { onPress: () => void }) {
+  const { puzzle, attempt, streak, loading } = useDailyPuzzle();
+
+  const todayStr = new Date().toLocaleDateString('pt-BR', {
+    day: '2-digit', month: 'long',
+  });
+
+  const difficultyColor: Record<string, string> = {
+    easy: '#22c55e', medium: '#f59e0b', hard: '#ef4444', expert: '#a855f7',
+  };
+  const difficultyLabel: Record<string, string> = {
+    easy: 'Fácil', medium: 'Médio', hard: 'Difícil', expert: 'Expert',
+  };
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={{
+        backgroundColor: '#1e1e1e',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 20,
+        borderWidth: 1.5,
+        borderColor: attempt?.solved ? '#22c55e' : '#d4a843',
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+        <Text style={{ fontSize: 28, marginRight: 10 }}>📅</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: '#d4a843', fontWeight: 'bold', fontSize: 16 }}>
+            Puzzle do Dia
+          </Text>
+          <Text style={{ color: '#9a9a9a', fontSize: 12 }}>{todayStr}</Text>
+        </View>
+        {/* Streak badge */}
+        <View style={{
+          backgroundColor: 'rgba(212,168,67,0.15)',
+          borderRadius: 8,
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          borderWidth: 1,
+          borderColor: '#d4a843',
+          alignItems: 'center',
+        }}>
+          <Text style={{ color: '#d4a843', fontSize: 16, fontWeight: 'bold' }}>{streak}</Text>
+          <Text style={{ color: '#9a9a9a', fontSize: 10 }}>🔥 dias</Text>
+        </View>
+      </View>
+
+      {loading ? (
+        <ActivityIndicator color="#d4a843" size="small" style={{ marginVertical: 8 }} />
+      ) : puzzle ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{
+            backgroundColor: (difficultyColor[puzzle.difficulty] ?? '#9a9a9a') + '20',
+            borderRadius: 6,
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+            borderWidth: 1,
+            borderColor: (difficultyColor[puzzle.difficulty] ?? '#9a9a9a') + '50',
+          }}>
+            <Text style={{ color: difficultyColor[puzzle.difficulty] ?? '#9a9a9a', fontSize: 12, fontWeight: '600' }}>
+              {difficultyLabel[puzzle.difficulty] ?? puzzle.difficulty}
+            </Text>
+          </View>
+          <Text style={{ color: '#9a9a9a', fontSize: 12 }}>⭐ {puzzle.rating}</Text>
+          <Text style={{ color: '#9a9a9a', fontSize: 12 }}>•</Text>
+          <Text style={{ color: '#9a9a9a', fontSize: 12 }}>{puzzle.title}</Text>
+        </View>
+      ) : null}
+
+      <View style={{
+        marginTop: 12,
+        backgroundColor: attempt?.solved ? '#22c55e' : '#d4a843',
+        borderRadius: 8,
+        paddingVertical: 8,
+        alignItems: 'center',
+      }}>
+        <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 13 }}>
+          {attempt?.solved ? '✓ Já resolvido hoje!' : '▶ Resolver Agora'}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main screen
+// ─────────────────────────────────────────────────────────────────────────────
 export default function PuzzlesScreen() {
   const router = useRouter();
   const { user, profile } = useSupabaseAuth();
@@ -185,6 +270,14 @@ export default function PuzzlesScreen() {
   const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(0);
   const [solved, setSolved] = useState(0);
   const [skipped, setSkipped] = useState(0);
+
+  const handleModeSelect = (modeId: string) => {
+    if (modeId === 'daily') {
+      router.push('/daily-puzzle');
+    } else {
+      setSelectedMode(modeId);
+    }
+  };
 
   const handleSolve = () => {
     setSolved(s => s + 1);
@@ -207,11 +300,11 @@ export default function PuzzlesScreen() {
     }
   };
 
+  // ── Non-daily mode game view ─────────────────────────────────────────────
   if (selectedMode) {
     return (
       <ScreenContainer containerClassName="bg-background">
         <ScrollView contentContainerStyle={{ padding: 16 }}>
-          {/* Header */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
             <TouchableOpacity onPress={() => { setSelectedMode(null); setCurrentPuzzleIndex(0); setSolved(0); }} style={{ marginRight: 12 }}>
               <Text style={{ color: '#9a9a9a', fontSize: 24 }}>←</Text>
@@ -236,16 +329,20 @@ export default function PuzzlesScreen() {
     );
   }
 
+  // ── Main hub ─────────────────────────────────────────────────────────────
   return (
     <ScreenContainer containerClassName="bg-background">
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         {/* Header */}
-        <View style={{ marginBottom: 24, paddingTop: 8 }}>
+        <View style={{ marginBottom: 20, paddingTop: 8 }}>
           <Text style={{ fontSize: 26, fontWeight: 'bold', color: '#f0f0f0' }}>🧩 Puzzles</Text>
           <Text style={{ color: '#9a9a9a', fontSize: 14, marginTop: 4 }}>
             Melhore seu jogo com problemas táticos
           </Text>
         </View>
+
+        {/* Daily puzzle card (with real data) */}
+        <DailyPuzzleCard onPress={() => router.push('/daily-puzzle')} />
 
         {/* Stats if logged in */}
         {user && profile && (
@@ -277,14 +374,14 @@ export default function PuzzlesScreen() {
           </View>
         )}
 
-        {/* Puzzle Modes */}
+        {/* Other puzzle modes (excluding daily — already shown above) */}
         <Text style={{ color: '#d4a843', fontSize: 14, fontWeight: '600', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>
-          Modos de Puzzle
+          Outros Modos
         </Text>
-        {PUZZLE_MODES.map((mode) => (
+        {PUZZLE_MODES.filter(m => m.id !== 'daily').map((mode) => (
           <TouchableOpacity
             key={mode.id}
-            onPress={() => setSelectedMode(mode.id)}
+            onPress={() => handleModeSelect(mode.id)}
             style={{
               backgroundColor: '#2c2c2c', borderRadius: 16, padding: 18, marginBottom: 12,
               borderWidth: 1, borderColor: '#4a4a4a',
